@@ -1,0 +1,13 @@
+﻿Mooni Analyzer установлен!  (создано Ernomoon)
+
+VST3 установлен сюда:
+  C:\Program Files\Common Files\VST3\Mooni Analyzer.vst3
+
+Как открыть в FL Studio:
+  1. Options → Manage plugins → нажмите «Find more plugins» (или «Find installed plugins»).
+  2. В списке найдите «Mooni Analyzer» (производитель Ernomoon) и отметьте звёздочкой (избранное).
+  3. Откройте Mixer, выберите канал Master и в ПОСЛЕДНИЙ слот вставьте Mooni Analyzer.
+  4. Нажмите Play — Mooni начнёт слушать сам.
+
+Совет: Mooni должен стоять последним в цепочке мастер-канала — он анализирует то,
+что реально выходит из плагина.

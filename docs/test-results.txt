@@ -1,0 +1,90 @@
+Mooni Analyzer test runner
+
+[Loudness meter — EBU Tech 3341]
+  ok   1 kHz -23 dBFS stereo @ 44100                    -22.9905 (expect -23.0000)
+  ok   1 kHz -23 dBFS stereo @ 48000                    -22.9933 (expect -23.0000)
+  ok   1 kHz -23 dBFS stereo @ 96000                    -23.0106 (expect -23.0000)
+  ok   1 kHz -23 dBFS stereo @ 192000                   -23.0203 (expect -23.0000)
+  ok   Tech 3341 case 3 (gating -36/-23/-36)            -23.0139 (expect -23.0000)
+  ok   LRA Tech 3342 case 1                             10.0000 (expect 10.0000)
+
+[True peak]
+  ok   fs/4 sine 45deg: sample peak                     -3.0103 (expect -3.0100)
+  ok   fs/4 sine 45deg: true peak (4x)                  0.1052 (expect 0.0000)
+  ok   fs/4 sine 45deg: reference 16x TP                -0.0000 (expect 0.0000)
+  ok   997 Hz -6 dBFS: true peak                        -5.9973 (expect -6.0000)
+
+[True-peak detector vs 16x reference, white noise band-limited to 20 kHz]
+  ok   4x detector vs reference                         2.1268 (expect 2.1740)
+  ok   8x detector vs reference                         2.1763 (expect 2.1740)
+  info limited white noise: sample peak -1.020 dB, samples at clamp 0, ref TP -0.987 dBTP
+
+[Parametric EQ]
+  ok   bell +6 dB @1k gain, sr 44100                    6.0000 (expect 6.0000)
+  ok   bell analytic response @1k                       6.0000 (expect 6.0000)
+  ok   bell analytic response @100 Hz                   0.0652 (expect 0.0000)
+  ok   bell +6 dB @1k gain, sr 48000                    6.0000 (expect 6.0000)
+  ok   bell analytic response @1k                       6.0000 (expect 6.0000)
+  ok   bell analytic response @100 Hz                   0.0652 (expect 0.0000)
+  ok   bell +6 dB @1k gain, sr 96000                    6.0000 (expect 6.0000)
+  ok   bell analytic response @1k                       6.0000 (expect 6.0000)
+  ok   bell analytic response @100 Hz                   0.0653 (expect 0.0000)
+  ok   EQ disabled is bit-exact
+  ok   Side-only band leaves mono signal untouched (max diff 0)
+  ok   EQ stable under aggressive automation sweep
+
+[Stereo imager]
+  ok   imager @100%: magnitude ripple (dB)              0.0000 (expect 0.0000)
+  ok   width 0% on all bands collapses to mono (max L-R 8.9e-08)
+  ok   low band narrowed: width low 10.1%, top 99.7%
+  ok   imager disabled is bit-exact
+
+[Maximizer]
+  ok   +14 dB drive, ceiling -1 dBTP @ 44100: reference TP L -1.01 R -1.01 dBTP
+  ok   +14 dB drive, ceiling -1 dBTP @ 48000: reference TP L -1.01 R -1.01 dBTP
+  ok   +14 dB drive, ceiling -1 dBTP @ 96000: reference TP L -1.02 R -1.02 dBTP
+  ok   maximizer disabled = exact 143-sample delay (2.98 ms)
+  ok   maximizer on, no limiting needed: transparent (max diff 0)
+  ok   clipper 60%: max limiter GR -2.53 dB (vs -3.65 dB without)
+
+[Analyser measurements]
+  ok   silence -> no report, no problems, no NaN (I=-100.0)
+  ok   uncorrelated noise: correlation                  0.0013 (expect 0.0000)
+  ok   uncorrelated noise: width %                      99.8686 (expect 100.0000)
+  ok   uncorrelated noise: mono loss dB                 -3.0046 (expect -3.0100)
+  ok   mono: correlation                                1.0000 (expect 1.0000)
+  ok   mono: width                                      0.0000 (expect 0.0000)
+  ok   pink noise flat in 1/6-oct bands (spread dB)     0.7744 (expect 0.0000)
+  ok   antiphase: correlation                           -1.0000 (expect -1.0000)
+  ok   antiphase -> phase problem reported (score 64)
+  ok   balance: L +3 dB -> -3 dB                        -3.0312 (expect -3.0000)
+  ok   hard-clipped sine: 8800 clip events (54433/min)
+  ok   clean sine at -0.9 dBFS: 0 clip events
+  ok   transients: micro-dyn 18.2 dB vs squashed 7.6 dB, onsets 39
+  ok   +12 dB low shelf detected: score 56, 10 problems, first EQ band 25 Hz 0.0 dB
+  ok   applying recommendations improves tonal score 61 -> 94 (total 56 -> 63)
+  ok   same LUFS at 44.1/48/96 kHz: -19.991 -19.993 -20.011
+
+[Loudness planner]
+  ok   planner prediction vs real, target -9            -9.6040 (expect -9.6132)
+       note: Цель недостижима: громче ≈-9.6 LUFS этот материал не станет — лимитер просто начнёт сильнее «качать». Помогут клиппер или работа над пиками в миксе.
+       clip 0%: source -24.20 LUFS, drive +20.9 dB, predicted -9.61, avg GR 6.1 dB, risk 2, safe target -10.0, TP -0.67
+  ok   planner prediction vs real, target -7            -9.5405 (expect -9.5584)
+       note: Цель недостижима: громче ≈-9.6 LUFS этот материал не станет — лимитер просто начнёт сильнее «качать». Помогут клиппер или работа над пиками в миксе.
+       clip 0%: source -24.20 LUFS, drive +21.4 dB, predicted -9.56, avg GR 6.5 dB, risk 2, safe target -10.0, TP -0.66
+  ok   planner prediction vs real, target -5            -6.2783 (expect -6.2987)
+       note: Цель недостижима: громче ≈-6.3 LUFS этот материал не станет — лимитер просто начнёт сильнее «качать». Помогут клиппер или работа над пиками в миксе.
+       clip 50%: source -24.20 LUFS, drive +23.4 dB, predicted -6.30, avg GR 3.7 dB, risk 0, safe target -6.3, TP -0.69
+
+[Report serialisation]
+  ok   roundtrip integrated                             -20.8052 (expect -20.8052)
+  ok   report roundtrip: score 59, 7 problems, verdict "Хм. Тут есть над чем поработать. Серьёзно."
+
+[Analysis engine end-to-end]
+  ok   smart mode ready during playback: 1 ready event(s), 2 report(s), 24.6 s heard, FIFO drops 0
+  ok   final report on transport stop: score 56, 24.9 s analysed, genre guess Акустика / джаз / лоу-фай
+
+[Reference track]
+  ok   reference 44.1 kHz WAV analysed: -20.92 LUFS, width 0.0%, 10.0 s
+
+100 checks, 0 failures

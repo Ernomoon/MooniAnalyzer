@@ -1,0 +1,15 @@
+﻿Mooni Analyzer
+Copyright (c) 2026 Ernomoon. All rights reserved.
+Created by Ernomoon.
+
+Mooni Analyzer — оригинальный продукт Ernomoon. Персонаж Mooni, визуальная вселенная
+«Лунная слуховая станция» и тексты интерфейса являются частью этого продукта.
+
+Сторонние компоненты:
+- JUCE 8 (https://juce.com) — используется по лицензии JUCE (AGPLv3 или коммерческая
+  лицензия JUCE, включая бесплатный тариф для небольших авторов). Перед коммерческим
+  распространением убедитесь, что у вас подходящая лицензия JUCE.
+- VST3 SDK (Steinberg Media Technologies GmbH), входит в JUCE. VST — торговая марка
+  Steinberg Media Technologies GmbH.
+- Шрифты Nunito и Unbounded — SIL Open Font License 1.1 (тексты лицензий
+  установлены в папку licenses).
