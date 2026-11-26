@@ -144,8 +144,8 @@ void SubscoreBars::mouseMove (const juce::MouseEvent& e)
 ProblemCard::ProblemCard (UiContext& c, const Problem& p, int idx) : ctx (c), problem (p), index (idx)
 {
     const int room = roomForModule (p.module);
-    const juce::String roomNames[] = { ru ("Обсерватория"), ru ("Кратер частот"), ru ("Приливы"), ru ("Гравитация"), ru ("Эталон"), ru ("Журнал") };
-    openBtn.setButtonText (ru ("Открыть: ") + roomNames[room]);
+    const juce::String roomNames[] = { ru ("Обзор"), ru ("Эквалайзер"), ru ("Стерео"), ru ("Громкость"), ru ("Референс"), ru ("История") };
+    openBtn.setButtonText (ru ("Перейти: ") + roomNames[room]);
     openBtn.onClick = [this, room] { if (ctx.goRoom) ctx.goRoom (room); };
     setButtonStyle (openBtn, ButtonStyle::Ghost);
     addChildComponent (openBtn);
@@ -176,8 +176,8 @@ int ProblemCard::preferredHeight (int width) const
         juce::AttributedString as; as.append (t, f, col::text); as.setWordWrap (juce::AttributedString::byWord);
         juce::TextLayout tl; tl.createLayout (as, (float) width - 34.0f); return (int) std::ceil (tl.getHeight());
     };
-    int h = 14 + 20 + 4 + measure (problem.what, body (12.5f)) + 12;
-    if (expanded) h += measure (problem.why, body (12.5f)) + 10 + measure (problem.fix, semi (12.5f)) + 12 + 32;
+    int h = 14 + 20 + 4 + measure (problem.what, body (12.5f)) + 12 + (expanded ? 0 : 16);
+    if (expanded) h += measure (problem.why, body (12.5f)) + 10 + measure (problem.fix, semi (12.5f)) + 12 + 32 + 28;
     return h;
 }
 
@@ -208,17 +208,14 @@ void ProblemCard::paint (juce::Graphics& g)
     auto t = r.reduced (16, 0).withTrimmedTop (10);
     g.setColour (col::text); g.setFont (heavy (14.0f));
     auto head = t.removeFromTop (20);
-    // severity dots
-    const int dots = 1 + juce::roundToInt (problem.severity * 3.0f);
-    for (int i = 0; i < 4; ++i)
-    {
-        g.setColour (i < dots ? sc : col::line);
-        g.fillEllipse (head.getRight() - 46.0f + (float) i * 11.0f, head.getCentreY() - 3.5f, 7, 7);
-    }
+    // severity in words
+    const juce::String sevWord = problem.severity >= 0.7f ? ru ("Критично") : problem.severity >= 0.4f ? ru ("Важно")
+                               : problem.severity >= 0.2f ? ru ("Желательно") : ru ("Мелочь");
+    drawChip (g, juce::Rectangle<float> (head.getRight() - 84.0f, head.getY() + 1, 84, 18), sevWord, col::night0, sc, 11.0f);
     g.setColour (col::text);
-    g.drawText (juce::String (index + 1) + ". " + problem.title, head.withTrimmedRight (54), juce::Justification::centredLeft);
+    g.drawText (juce::String (index + 1) + ". " + problem.title, head.withTrimmedRight (160), juce::Justification::centredLeft);
     if (! problem.measured)
-        drawChip (g, juce::Rectangle<float> (head.getRight() - 120.0f, head.getY() + 2, 64, 16), ru ("оценка"), col::night0, col::lilacDim, 10.5f);
+        drawChip (g, juce::Rectangle<float> (head.getRight() - 154.0f, head.getY() + 1, 64, 18), ru ("оценка"), col::text, col::night3, 10.5f);
     t.removeFromTop (4);
 
     auto drawPara = [&] (const juce::String& s, juce::Font f, juce::Colour c)
@@ -228,12 +225,20 @@ void ProblemCard::paint (juce::Graphics& g)
         tl.draw (g, t.removeFromTop (tl.getHeight()));
     };
     drawPara (problem.what, body (12.5f), col::textDim);
+    if (! expanded)
+    {
+        t.removeFromTop (2);
+        g.setColour (col::textFaint); g.setFont (semi (11.0f));
+        g.drawText (ru ("нажми, чтобы узнать, почему это важно и как исправить"), t.removeFromTop (14), juce::Justification::centredLeft);
+    }
     if (expanded)
     {
         t.removeFromTop (8);
-        drawPara (problem.why, body (12.5f), col::text.withAlpha (0.85f));
+        g.setColour (col::textFaint); g.setFont (heavy (10.5f)); g.drawText (ru ("ПОЧЕМУ ЭТО ВАЖНО"), t.removeFromTop (14), juce::Justification::centredLeft);
+        drawPara (problem.why, body (12.5f), col::text.withAlpha (0.88f));
         t.removeFromTop (8);
-        drawPara (ru ("→ ") + problem.fix, semi (12.5f), col::mint);
+        g.setColour (col::textFaint); g.setFont (heavy (10.5f)); g.drawText (ru ("КАК ИСПРАВИТЬ"), t.removeFromTop (14), juce::Justification::centredLeft);
+        drawPara (problem.fix, semi (12.5f), col::mint);
     }
 }
 
@@ -538,8 +543,7 @@ void BipToast::paint (juce::Graphics& g)
     g.setColour (juce::Colour (0xffd8d2e8)); g.fillEllipse (juce::Rectangle<float> (11, 11).withCentre (s));
     g.setColour (it.accent); g.fillEllipse (juce::Rectangle<float> (3, 3).withCentre (s + Point<float> (2, -2)));
     juce::AttributedString as;
-    as.append (ru ("Бип: "), heavy (13.0f), it.accent);
-    as.append (it.text, semi (13.0f), col::text);
+        as.append (it.text, semi (13.0f), col::text);
     as.setWordWrap (juce::AttributedString::byWord);
     juce::TextLayout tl; tl.createLayout (as, r.getWidth() - 62);
     tl.draw (g, r.withTrimmedLeft (48).reduced (6, 8));

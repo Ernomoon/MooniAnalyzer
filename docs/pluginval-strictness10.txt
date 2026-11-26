@@ -1,6 +1,6 @@
-Started validating: /home/claude/MooniAnalyzer/build/MooniAnalyzer_artefacts/Release/VST3/Mooni Analyzer.vst3
-Random seed: 0x2818565
+Random seed: 0x5ac6a8c
 Validation started
+Started validating: /home/claude/MooniAnalyzer/build/MooniAnalyzer_artefacts/Release/VST3/Mooni Analyzer.vst3
 Strictness level: 10
 -----------------------------------------------------------------
 Starting tests in: pluginval / Scan for plugins located in: /home/claude/MooniAnalyzer/build/MooniAnalyzer_artefacts/Release/VST3/Mooni Analyzer.vst3...

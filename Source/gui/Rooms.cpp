@@ -99,7 +99,7 @@ ObservatoryRoom::ObservatoryRoom (UiContext& c) : Room (c), problems (c)
 
 MooniSpot ObservatoryRoom::mooniSpot() const
 {
-    return { { 200.0f, 340.0f }, 88.0f, 0.0f, false, { 10.0f, 10.0f, 370.0f, 230.0f } };
+    return { { 262.0f, 300.0f }, 78.0f, 0.0f, false, { 10.0f, 10.0f, 370.0f, 200.0f } };
 }
 
 void ObservatoryRoom::resized()
@@ -108,11 +108,11 @@ void ObservatoryRoom::resized()
     subs.setBounds (412, 430, 320, 148);
     problems.setBounds (784, 58, 386, 380);
     metrics.setBounds (776, 486, 400, 108);
-    modeFull.setBounds (40, 528, 150, 28);
-    modeSmart.setBounds (196, 528, 160, 28);
-    listenBtn.setBounds (40, 592, 150, 30);
-    finishBtn.setBounds (196, 592, 160, 30);
-    autoBtn.setBounds (40, 562, 316, 24);
+    modeFull.setBounds (40, 532, 150, 28);
+    modeSmart.setBounds (196, 532, 160, 28);
+    autoBtn.setBounds (40, 566, 316, 24);
+    listenBtn.setBounds (40, 596, 150, 30);
+    finishBtn.setBounds (196, 596, 160, 30);
     applyAllBtn.setBounds (412, 590, 156, 30);
     copyBtn.setBounds (576, 590, 156, 30);
 }
@@ -154,23 +154,48 @@ void ObservatoryRoom::refresh (float dt)
     autoBtn.setToggleState (ctx.proc.settings.autoListen, juce::dontSendNotification);
     const bool active = ctx.live.state == AnalysisState::Listening || ctx.live.state == AnalysisState::Ready;
     finishBtn.setEnabled (active && ctx.live.activeSeconds >= 3.0);
-    repaint (24, 440, 352, 196);
+    repaint (24, 396, 352, 240);
 }
 
 void ObservatoryRoom::paint (juce::Graphics& g)
 {
     // status card (bottom-left, under Mooni)
     const auto& L = ctx.live;
-    auto status = juce::Rectangle<int> (24, 444, 352, 190);
+    auto status = juce::Rectangle<int> (24, 400, 352, 234);
     drawGlassCard (g, status.toFloat());
+
+    // where are we in the workflow: 1 listen -> 2 report -> 3 fix -> 4 check
+    const bool hasReport = ctx.report && ctx.report->valid;
+    const bool listening = L.state == AnalysisState::Listening || L.state == AnalysisState::Ready;
+    int step = 0;
+    if (listening) step = 0;
+    else if (hasReport && ctx.isStale()) step = 3;
+    else if (hasReport) step = 2;
+    const char* stepNames[] = { "Прослушать", "Отчёт", "Исправить", "Проверить" };
+    {
+        const float w = (float) (status.getWidth() - 24) / 4.0f;
+        for (int i = 0; i < 4; ++i)
+        {
+            auto cell = juce::Rectangle<float> ((float) status.getX() + 12 + w * (float) i, (float) status.getY() + 12, w - 4, 24);
+            const bool done = i < step || (i == 1 && hasReport), cur = i == step;
+            g.setColour (cur ? col::lilac : (done ? col::mint.withAlpha (0.22f) : col::night0.withAlpha (0.6f)));
+            g.fillRoundedRectangle (cell, 12);
+            g.setColour (cur ? col::night0 : (done ? col::mint : col::textFaint));
+            g.setFont (heavy (11.0f));
+            g.drawText ((done && ! cur ? juce::String::fromUTF8 ("✓ ") : juce::String (i + 1) + " ") + juce::String::fromUTF8 (stepNames[i]), cell, juce::Justification::centred);
+        }
+    }
+
     juce::String title, sub;
     juce::Colour accent = col::lilac;
     const int secs = (int) L.activeSeconds;
     switch (L.state)
     {
         case AnalysisState::Idle:
-            title = ru ("Жду звук");
-            sub = ctx.proc.settings.autoListen ? ru ("Нажми Play в FL Studio — я начну слушать сам.") : ru ("Нажми «Слушать заново», затем Play.");
+            title = hasReport ? (ctx.isStale() ? ru ("Проверь изменения") : ru ("Отчёт готов")) : ru ("Жду звук");
+            sub = hasReport ? (ctx.isStale() ? ru ("Настройки изменились. Нажми Play (или «Слушать заново») — я оценю результат.")
+                                             : ru ("Смотри список «Что исправить» справа и применяй рекомендации."))
+                            : (ctx.proc.settings.autoListen ? ru ("Нажми Play в FL Studio — я начну слушать сам.") : ru ("Нажми «Слушать заново», затем Play."));
             break;
         case AnalysisState::Listening:
             title = fmt ("Слушаю… {} с", secs); accent = col::earth;
@@ -180,49 +205,47 @@ void ObservatoryRoom::paint (juce::Graphics& g)
             break;
         case AnalysisState::Ready:
             accent = col::mint;
-            title = L.mode == AnalysisMode::Full ? ru ("Характер понятен") : ru ("Отчёт готов — уточняю");
+            title = L.mode == AnalysisMode::Full ? ru ("Характер понятен") : ru ("Отчёт готов, уточняю");
             sub = L.mode == AnalysisMode::Full ? ru ("Можешь продолжать или остановить — я доделаю отчёт.") : ru ("Можно остановить. Если играешь дальше, отчёт обновится.");
             break;
         case AnalysisState::Done:
-            title = ru ("Анализ готов"); accent = col::mint;
-            sub = ctx.report ? fmt ("Прослушано {} с • профиль «{}»", juce::roundToInt (ctx.report->stats.secondsAnalysed), genreProfiles()[(size_t) ctx.report->genreProfile].name) : juce::String();
+            title = ctx.isStale() ? ru ("Проверь изменения") : ru ("Анализ готов"); accent = ctx.isStale() ? col::amber : col::mint;
+            sub = ctx.isStale() ? ru ("Ты изменил настройки. Нажми Play или «Слушать заново» — я сравню с прошлой оценкой.")
+                                : (ctx.report ? fmt ("Прослушано {} с · стиль «{}». Теперь — исправления справа.", juce::roundToInt (ctx.report->stats.secondsAnalysed), genreProfiles()[(size_t) ctx.report->genreProfile].name) : juce::String());
             break;
         case AnalysisState::TooShort:
             title = ru ("Мало звука"); accent = col::amber;
             sub = ru ("Нужно хотя бы несколько секунд музыки. Попробуй ещё раз.");
             break;
     }
-    g.setColour (accent); g.setFont (display (17.0f));
-    g.drawText (title, status.getX() + 16, status.getY() + 12, status.getWidth() - 32, 22, juce::Justification::centredLeft);
+    g.setColour (accent); g.setFont (display (16.0f));
+    g.drawText (title, status.getX() + 16, status.getY() + 46, status.getWidth() - 32, 22, juce::Justification::centredLeft);
     g.setColour (col::textDim); g.setFont (body (12.5f));
-    g.drawFittedText (sub, status.getX() + 16, status.getY() + 36, status.getWidth() - 32, 32, juce::Justification::topLeft, 2);
-    // confidence ring
-    if (L.state == AnalysisState::Listening || L.state == AnalysisState::Ready)
+    g.drawFittedText (sub, status.getX() + 16, status.getY() + 70, status.getWidth() - 32, 34, juce::Justification::topLeft, 2);
+    if (listening)
     {
-        auto bar = juce::Rectangle<float> ((float) status.getX() + 16, (float) status.getY() + 72, (float) status.getWidth() - 32, 6);
+        auto bar = juce::Rectangle<float> ((float) status.getX() + 16, (float) status.getY() + 106, (float) status.getWidth() - 32, 6);
         g.setColour (col::night0); g.fillRoundedRectangle (bar, 3);
         g.setColour (accent); g.fillRoundedRectangle (bar.withWidth (bar.getWidth() * juce::jlimit (0.0f, 1.0f, L.confidence)), 3);
         g.setColour (col::textFaint); g.setFont (semi (10.5f));
-        g.drawText (fmt ("уверенность {}%  ·  громкость {} · спектр {} · стерео {}", juce::roundToInt (L.confidence * 100),
-                         juce::roundToInt (L.loudStab * 100), juce::roundToInt (L.specStab * 100), juce::roundToInt (L.stereoStab * 100)),
-                    bar.translated (0, 4).withHeight (14), juce::Justification::centredLeft);
+        g.drawText (fmt ("уверенность {}%", juce::roundToInt (L.confidence * 100)), bar.translated (0, 4).withHeight (14), juce::Justification::centredLeft);
     }
 
     // score card
     auto sc = juce::Rectangle<int> (392, 16, 360, 616);
-    card (g, sc, ru ("Лунометр"), ru ("техническое качество и готовность мастера"));
+    card (g, sc, ru ("Оценка мастера"), ru ("насколько трек готов к релизу, 1–100"));
     if (ctx.report && ctx.report->valid)
     {
         g.setColour (col::text); g.setFont (semi (14.0f));
         g.drawFittedText (ctx.report->verdict, 412, 352, 320, 40, juce::Justification::centred, 2);
         juce::String chip = ctx.proc.settings.genreChoice > 0 ? ru ("профиль: ") + genreProfiles()[(size_t) ctx.proc.settings.genreChoice].name
                                                               : ru ("похоже на: ") + ctx.report->genreGuess + ru (" (предположение)");
-        if (ctx.report->usedReference) chip << ru (" • с эталоном");
+        if (ctx.report->usedReference) chip << ru (" • с референсом");
         drawChip (g, juce::Rectangle<float> (412, 398, 320, 22), chip, col::lilac, col::night0.withAlpha (0.7f), 11.5f);
     }
 
     auto pc = juce::Rectangle<int> (768, 16, 416, 430);
-    card (g, pc, ru ("Что я услышал"), ctx.report && ctx.report->valid ? plural ((int) ctx.report->problems.size(), "замечание", "замечания", "замечаний") + ru (", главное — сверху") : ru ("здесь появятся замечания"));
+    card (g, pc, ru ("Что исправить"), ctx.report && ctx.report->valid ? plural ((int) ctx.report->problems.size(), "замечание", "замечания", "замечаний") + ru (", главное — сверху") : ru ("появится после первого прослушивания"));
     auto mc = juce::Rectangle<int> (768, 456, 416, 176);
     card (g, mc, ru ("Ключевые измерения"));
     if (translation.isNotEmpty())
@@ -239,7 +262,7 @@ EqBandStrip::EqBandStrip (UiContext& c) : ctx (c)
     for (int i = 0; i < kEqBands; ++i)
     {
         auto& col_ = cols[(size_t) i];
-        col_.on.setButtonText (juce::String (i + 1));
+        col_.on.setButtonText (ru ("Полоса ") + juce::String (i + 1));
         col_.type.addItemList (filterTypeNames(), 1);
         col_.channel.addItemList (channelNames(), 1);
         for (auto* s : { &col_.freq, &col_.gain, &col_.q })
@@ -260,7 +283,8 @@ EqBandStrip::EqBandStrip (UiContext& c) : ctx (c)
         // formatters must be set after the attachments (they install their own)
         col_.freq.textFromValueFunction = [] (double v) { return hz ((float) v); };
         col_.freq.valueFromTextFunction = [] (const juce::String& t) { const double v = t.retainCharacters ("0123456789.,").replaceCharacter (',', '.').getDoubleValue(); return t.containsIgnoreCase (juce::String::fromUTF8 ("к")) || t.containsIgnoreCase ("k") ? v * 1000.0 : v; };
-        col_.gain.textFromValueFunction = [] (double v) { return signedNum ((float) v, 1); };
+        col_.gain.textFromValueFunction = [] (double v) { return signedNum ((float) v, 1) + ru (" дБ"); };
+        col_.gain.valueFromTextFunction = [] (const juce::String& t) { return t.retainCharacters ("-0123456789.,").replaceCharacter (',', '.').getDoubleValue(); };
         col_.q.textFromValueFunction = [] (double v) { return "Q " + juce::String (v, v < 10 ? 2 : 1); };
         col_.q.valueFromTextFunction = [] (const juce::String& t) { return t.retainCharacters ("0123456789.,").replaceCharacter (',', '.').getDoubleValue(); };
         col_.freq.updateText(); col_.gain.updateText(); col_.q.updateText();
@@ -316,7 +340,7 @@ EqRoom::EqRoom (UiContext& c) : Room (c), graph (c), strip (c)
     setButtonStyle (applyBtn, ButtonStyle::Primary);
     resetBtn.setButtonText (ru ("Сбросить EQ"));
     resetBtn.onClick = [this] { ctx.proc.resetEq(); if (ctx.action) ctx.action ("reset", {}); };
-    compareBtn.setButtonText (ru ("Сравнить: удерживай"));
+    compareBtn.setButtonText (ru ("Сравнить без EQ (удерживай)"));
     compareBtn.setTooltip (ru ("Пока кнопка нажата, EQ выключен — слушай разницу."));
     compareBtn.onStateChange = [this]
     {
@@ -372,7 +396,7 @@ void EqRoom::paint (juce::Graphics& g)
     if (ctx.report && ctx.report->valid)
         sub = ctx.isStale() ? ru ("настройки изменились после анализа — переслушай, чтобы обновить рекомендацию")
                             : fmt ("рекомендация из анализа {} — сигнал не изменится, пока не применишь", juce::Time (ctx.report->timeMs).formatted ("%H:%M"));
-    card (g, { 16, 16, 1168, 424 }, ru ("Кратер частот"), sub);
+    card (g, { 16, 16, 1168, 424 }, ru ("Кривая эквалайзера"), sub);
     card (g, { 16, 446, 920, 186 }, juce::String());
     card (g, { 946, 446, 238, 186 }, ru ("Действия"));
 }
@@ -501,7 +525,7 @@ TidesRoom::TidesRoom (UiContext& c) : Room (c), bands (c)
     addAndMakeVisible (bands);
     addAndMakeVisible (mirror);
     addAndMakeVisible (phase);
-    phase.setTooltip (ru ("Корреляция фаз в виде фазы Луны: полная луна — моно (+1), половина — широкое стерео (0), новолуние — противофаза (−1)."));
+    phase.setTooltip (ru ("Корреляция: полная луна — моно (+1), половина — широкое стерео (0), тёмная — противофаза (−1, плохо)."));
 
     balance.setSliderStyle (juce::Slider::LinearHorizontal);
     balance.setTextBoxStyle (juce::Slider::TextBoxRight, false, 64, 18);
@@ -512,7 +536,7 @@ TidesRoom::TidesRoom (UiContext& c) : Room (c), bands (c)
     balance.updateText();
     addAndMakeVisible (balance);
 
-    onBtn.setButtonText (ru ("Приливы включены"));
+    onBtn.setButtonText (ru ("Стерео-обработка включена"));
     aOn = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (ctx.proc.apvts, imgOn, onBtn);
     addAndMakeVisible (onBtn);
 
@@ -570,8 +594,8 @@ void TidesRoom::refresh (float)
 
 void TidesRoom::paint (juce::Graphics& g)
 {
-    card (g, { 16, 16, 760, 430 }, ru ("Приливы"), ru ("ширина стерео по полосам: столбик — измерено, янтарная метка — рекомендация"));
-    card (g, { 786, 16, 398, 430 }, ru ("Приливное зеркало"));
+    card (g, { 16, 16, 760, 430 }, ru ("Ширина по полосам"), ru ("белый столбик — измерено в твоём миксе, жёлтая метка — рекомендация"));
+    card (g, { 786, 16, 398, 430 }, ru ("Вектороскоп и фаза"));
     card (g, { 16, 456, 720, 176 }, ru ("Баланс и проверка"));
 
     const auto& L = ctx.live;

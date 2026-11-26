@@ -21,7 +21,7 @@ int main (int argc, char** argv)
     }
     std::unique_ptr<juce::AudioProcessorEditor> ed (proc->createEditor());
     auto* editor = dynamic_cast<MooniEditor*> (ed.get());
-    ed->setSize (1200, 780);
+    ed->setSize (MooniEditor::kW, MooniEditor::kH);
 
     auto snap = [&] (const juce::String& name)
     {
@@ -107,6 +107,7 @@ int main (int argc, char** argv)
     proc->setValue (params::bypass, 0.0f);
 
     editor->showSettings (true); snap ("10_settings"); editor->showSettings (false);
+    editor->showHelp (true); snap ("10b_help"); editor->showHelp (false);
     editor->showAbout (true); for (int i = 0; i < 10; ++i) { editor->forceTick (1.0f / 30.0f); pump (5); } snap ("11_about"); editor->showAbout (false);
 
     // explosion animation frames

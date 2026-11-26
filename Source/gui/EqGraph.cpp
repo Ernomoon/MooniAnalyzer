@@ -11,8 +11,8 @@ static juce::Colour channelColour (int ch) { return ch == 1 ? col::lilac : ch ==
 
 EqGraph::EqGraph (UiContext& c) : ctx (c)
 {
-    setTooltip (ru ("Перетаскивай кратерят: влево-вправо — частота, вверх-вниз — усиление. Колесо — добротность (Q). "
-                    "Двойной клик по пустому месту — новая полоса. Правый клик — тип, канал, прослушка. Alt+клик — подслушать полосу."));
+    setTooltip (ru ("Перетаскивай точки полос: влево-вправо — частота, вверх-вниз — усиление. Колесо — добротность (Q). "
+                    "Двойной клик по пустому месту — новая полоса. Правый клик — тип фильтра, канал, прослушка. Alt+клик — подслушать полосу."));
 }
 
 juce::Rectangle<float> EqGraph::plot() const { return getLocalBounds().toFloat().reduced (44, 18).withTrimmedBottom (14); }
@@ -225,7 +225,7 @@ void EqGraph::paint (juce::Graphics& g)
     item (col::cream, ru ("твой EQ"), false);
     item (col::amber, ru ("рекомендация"), true);
     item (col::cream.withAlpha (0.55f), ru ("микс (среднее)"), false);
-    item (col::lilac, ctx.report && ctx.report->usedReference ? ru ("эталон") : ru ("ориентир стиля"), true);
+    item (col::lilac, ctx.report && ctx.report->usedReference ? ru ("референс") : ru ("ориентир стиля"), true);
 }
 
 void EqGraph::drawMite (juce::Graphics& g, Point<float> c, int band, const dsp::EqBandParams& b, bool activeMite)
@@ -336,7 +336,7 @@ void EqGraph::mouseDoubleClick (const juce::MouseEvent& e)
             ctx.proc.pushUndoSnapshot();
             return;
         }
-    if (ctx.toast) ctx.toast (ru ("Все 8 полос заняты. Выключи ненужную (правый клик по кратерёнку)."), col::amber);
+    if (ctx.toast) ctx.toast (ru ("Все 8 полос заняты. Выключи ненужную (правый клик по точке полосы)."), col::amber);
 }
 
 void EqGraph::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)
@@ -355,7 +355,7 @@ void EqGraph::showBandMenu (int band)
     for (int i = 0; i < tn.size(); ++i) types.addItem (100 + i, tn[i], true, bp.type == i);
     const auto cn = channelNames();
     for (int i = 0; i < cn.size(); ++i) chans.addItem (200 + i, cn[i], true, bp.channel == i);
-    m.addSectionHeader (ru ("Кратерёнок №") + juce::String (band + 1));
+    m.addSectionHeader (ru ("Полоса №") + juce::String (band + 1));
     m.addSubMenu (ru ("Тип фильтра"), types);
     m.addSubMenu (ru ("Канал"), chans);
     m.addItem (1, ru ("Подслушать эту полосу"));

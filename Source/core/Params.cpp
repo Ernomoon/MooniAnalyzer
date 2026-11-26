@@ -46,9 +46,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     auto attrHz  = juce::AudioParameterFloatAttributes().withLabel (ru ("Гц"));
     auto attrPct = juce::AudioParameterFloatAttributes().withLabel ("%");
 
-    layout.add (std::make_unique<APB> (juce::ParameterID { bypass, 1 }, ru ("Затмение (обход обработки)"), false));
+    layout.add (std::make_unique<APB> (juce::ParameterID { bypass, 1 }, ru ("Обход обработки (Bypass)"), false));
 
-    auto eq = std::make_unique<juce::AudioProcessorParameterGroup> ("eq", ru ("Кратер частот (EQ)"), "|");
+    auto eq = std::make_unique<juce::AudioProcessorParameterGroup> ("eq", ru ("Эквалайзер"), "|");
     eq->addChild (std::make_unique<APB> (juce::ParameterID { eqOn, 1 }, ru ("EQ: включён"), false));
     for (int i = 0; i < kEqBands; ++i)
     {
@@ -63,7 +63,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     }
     layout.add (std::move (eq));
 
-    auto img = std::make_unique<juce::AudioProcessorParameterGroup> ("img", ru ("Приливы (стерео)"), "|");
+    auto img = std::make_unique<juce::AudioProcessorParameterGroup> ("img", ru ("Стерео"), "|");
     img->addChild (std::make_unique<APB> (juce::ParameterID { imgOn, 1 }, ru ("Стерео: включено"), false));
     img->addChild (std::make_unique<APF> (juce::ParameterID { imgXover (0), 1 }, ru ("Стерео: раздел 1"), freqRange (40.0f, 800.0f), kDefaultXover[0], attrHz));
     img->addChild (std::make_unique<APF> (juce::ParameterID { imgXover (1), 1 }, ru ("Стерео: раздел 2"), freqRange (200.0f, 8000.0f), kDefaultXover[1], attrHz));
@@ -74,14 +74,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     img->addChild (std::make_unique<APF> (juce::ParameterID { imgBal, 1 }, ru ("Стерео: баланс Л/П"), Range (-3.0f, 3.0f, 0.01f), 0.0f, attrDb));
     layout.add (std::move (img));
 
-    auto mx = std::make_unique<juce::AudioProcessorParameterGroup> ("max", ru ("Гравитационный пресс (максимайзер)"), "|");
-    mx->addChild (std::make_unique<APB> (juce::ParameterID { maxOn, 1 }, ru ("Пресс: включён"), false));
-    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxDrive, 1 }, ru ("Пресс: драйв"), Range (-6.0f, 24.0f, 0.01f), 0.0f, attrDb));
-    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxCeil, 1 }, ru ("Пресс: потолок (dBTP)"), Range (-3.0f, 0.0f, 0.01f), -1.0f, attrDb));
-    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxRel, 1 }, ru ("Пресс: восстановление"), Range (10.0f, 1000.0f, 0.1f, 0.4f), 120.0f,
+    auto mx = std::make_unique<juce::AudioProcessorParameterGroup> ("max", ru ("Максимайзер"), "|");
+    mx->addChild (std::make_unique<APB> (juce::ParameterID { maxOn, 1 }, ru ("Максимайзер: включён"), false));
+    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxDrive, 1 }, ru ("Максимайзер: драйв"), Range (-6.0f, 24.0f, 0.01f), 0.0f, attrDb));
+    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxCeil, 1 }, ru ("Максимайзер: потолок (dBTP)"), Range (-3.0f, 0.0f, 0.01f), -1.0f, attrDb));
+    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxRel, 1 }, ru ("Максимайзер: восстановление"), Range (10.0f, 1000.0f, 0.1f, 0.4f), 120.0f,
                                          juce::AudioParameterFloatAttributes().withLabel (ru ("мс"))));
-    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxClip, 1 }, ru ("Пресс: клиппер"), Range (0.0f, 100.0f, 0.1f), 0.0f, attrPct));
-    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxTarget, 1 }, ru ("Пресс: цель LUFS"), Range (-18.0f, -3.0f, 0.1f), -9.0f,
+    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxClip, 1 }, ru ("Максимайзер: клиппер"), Range (0.0f, 100.0f, 0.1f), 0.0f, attrPct));
+    mx->addChild (std::make_unique<APF> (juce::ParameterID { maxTarget, 1 }, ru ("Максимайзер: цель LUFS"), Range (-18.0f, -3.0f, 0.1f), -9.0f,
                                          juce::AudioParameterFloatAttributes().withLabel ("LUFS")));
     layout.add (std::move (mx));
     return layout;

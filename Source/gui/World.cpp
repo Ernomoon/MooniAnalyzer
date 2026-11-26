@@ -27,8 +27,8 @@ void WorldView::buildSky()
     // nebulae
     auto neb = [&] (float x, float y, float r, juce::Colour c, float a)
     {
-        juce::ColourGradient gr (c.withAlpha (a), x, y, c.withAlpha (0.0f), x + r, y, true);
-        g.setGradientFill (gr); g.fillEllipse (x - r, y - r, r * 2, r * 2);
+        juce::ColourGradient grad (c.withAlpha (a), x, y, c.withAlpha (0.0f), x + r, y, true);
+        g.setGradientFill (grad); g.fillEllipse (x - r, y - r, r * 2, r * 2);
     };
     neb (900, 160, 380, col::lilac, 0.10f);
     neb (1050, 520, 300, col::pink, 0.06f);
@@ -126,8 +126,8 @@ void WorldView::paint (juce::Graphics& g)
     if (shooting.life >= 0)
     {
         const float a = std::sin (shooting.life / 0.9f * PI);
-        juce::ColourGradient gr (juce::Colours::white.withAlpha (0.9f * a), shooting.p.x, shooting.p.y, juce::Colours::white.withAlpha (0.0f), shooting.p.x - 140, shooting.p.y - 43, false);
-        g.setGradientFill (gr);
+        juce::ColourGradient grad (juce::Colours::white.withAlpha (0.9f * a), shooting.p.x, shooting.p.y, juce::Colours::white.withAlpha (0.0f), shooting.p.x - 140, shooting.p.y - 43, false);
+        g.setGradientFill (grad);
         juce::Path tail; tail.startNewSubPath (shooting.p); tail.lineTo (shooting.p.x - 140, shooting.p.y - 43);
         g.strokePath (tail, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
@@ -209,8 +209,8 @@ void WorldView::drawObservatory (juce::Graphics& g)
     hill.startNewSubPath (0, 520);
     hill.cubicTo (90, 470, 260, 455, 420, 505);
     hill.lineTo (420, 720); hill.lineTo (0, 720); hill.closeSubPath();
-    juce::ColourGradient gr (juce::Colour (0xff3d3478), 200, 460, juce::Colour (0xff1c1744), 200, 720, false);
-    g.setGradientFill (gr); g.fillPath (hill);
+    juce::ColourGradient grad (juce::Colour (0xff3d3478), 200, 460, juce::Colour (0xff1c1744), 200, 720, false);
+    g.setGradientFill (grad); g.fillPath (hill);
     g.setColour (col::lilac.withAlpha (0.35f));
     juce::Path ridge; ridge.startNewSubPath (0, 520); ridge.cubicTo (90, 470, 260, 455, 420, 505);
     g.strokePath (ridge, juce::PathStrokeType (2.0f));
@@ -238,13 +238,6 @@ void WorldView::drawObservatory (juce::Graphics& g)
         g.setColour (col::amber.brighter (0.3f)); g.drawEllipse (mouthE, 2.0f);
         if (signal) { g.setColour (col::earth.withAlpha (0.25f + 0.4f * level)); g.fillEllipse (mouthE.reduced (8, 5)); }
     }
-
-    // signpost
-    g.setColour (juce::Colour (0xff5b4b98)); g.fillRect (334.0f, 455.0f, 3.0f, 40.0f);
-    g.setColour (col::night2); g.fillRoundedRectangle (282, 438, 104, 22, 5);
-    g.setColour (col::lilac); g.drawRoundedRectangle (282, 438, 104, 22, 5, 1);
-    g.setFont (heavy (10.5f)); g.setColour (col::cream);
-    g.drawText (juce::String::fromUTF8 ("СТАНЦИЯ «УХО-1»"), 282, 438, 104, 22, juce::Justification::centred);
 
     // blinking antenna dish
     g.setColour (col::lilacDim); g.drawLine (370, 500, 370, 470, 2);
@@ -311,7 +304,7 @@ void WorldView::drawReferencePlanet (juce::Graphics& g)
     g.setColour (col::cream.withAlpha (0.7f)); g.strokePath (ring, juce::PathStrokeType (3.0f));
     g.setColour (col::cream.withAlpha (0.5f + 0.3f * std::sin (t * 2)));
     g.setFont (semi (11.0f));
-    g.drawText (juce::String::fromUTF8 ("планета «Эталон»"), juce::Rectangle<float> (140, 16).withCentre (c + Point<float> (0, 48)), juce::Justification::centred);
+    g.drawText (juce::String::fromUTF8 ("планета «Референс»"), juce::Rectangle<float> (140, 16).withCentre (c + Point<float> (0, 48)), juce::Justification::centred);
 }
 
 void WorldView::drawLogbook (juce::Graphics& g) { juce::ignoreUnused (g); }

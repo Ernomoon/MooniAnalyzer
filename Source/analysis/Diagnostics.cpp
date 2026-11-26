@@ -258,7 +258,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
         p.freqLo = reg.lo; p.freqHi = reg.hi;
         const float amount = std::round (juce::jlimit (1.0f, 5.0f, (std::abs (m) - t * 0.5f) * 0.7f) * 2.0f) / 2.0f;
         const auto range = hzRange (reg.lo, reg.hi);
-        const auto refWord = hasRef ? ru ("эталона") : ru ("ориентира стиля «") + g.name + ru ("»");
+        const auto refWord = hasRef ? ru ("референса") : ru ("ориентира стиля «") + g.name + ru ("»");
         if (m > 0)
         {
             p.title = ru (tx.tooMuchTitle);
@@ -432,7 +432,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
         p.title = ru ("Пики выше 0 дБTP");
         p.what = fmt ("True Peak {} дБTP, межсэмпловые перегрузки в {} фрагментах по 100 мс.", signedNum (s.truePeakDb, 2), s.truePeakOvers);
         p.why = ru ("Такие пики искажаются при конвертации в MP3/AAC/OGG на стримингах и в дешёвых ЦАПах.");
-        p.fix = ru ("Включи Гравитационный пресс с потолком −1.0 дБTP (для очень громких мастеров допустимо −0.3…−0.5).");
+        p.fix = ru ("Включи максимайзер (раздел «Громкость») с потолком −1.0 дБTP (для очень громких мастеров допустимо −0.3…−0.5).");
         p.severity = juce::jlimit (0.3f, 1.0f, 0.4f + (s.truePeakDb + 0.1f) * 0.25f + s.truePeakOvers * 0.002f);
         add (p);
     }
@@ -443,7 +443,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
         p.title = ru ("Цифровой клиппинг");
         p.what = fmt ("Найдено {} срезанных вершин на уровне пика (≈{} в минуту): несколько одинаковых сэмплов подряд.", s.clipEvents, num (s.clipEventsPerMinute, 1));
         p.why = ru ("Жёсткий срез даёт неприятные гармоники и «треск», особенно на кике, 808 и вокале.");
-        p.fix = ru ("Найди, где в цепочке сигнал упирается в 0 дБFS (мастер-канал, клиппер, сумма), убавь вход или замени жёсткий клип мягким клиппером Гравитации с передискретизацией.");
+        p.fix = ru ("Найди, где в цепочке сигнал упирается в 0 дБFS (мастер-канал, клиппер, сумма), убавь вход или замени жёсткий клип мягким клиппером из раздела «Громкость».");
         p.severity = juce::jlimit (0.3f, 1.0f, 0.3f + s.clipEventsPerMinute / 30.0f);
         add (p);
     }
@@ -470,7 +470,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
         p.what = fmt ("PLR {} дБ и микродинамика {} дБ — ниже типичного для стиля «{}» (≥{} / ≥{} дБ).",
                       num (s.plr), num (micro), g.name, num (g.minPlr, 0), num (g.minMicroDyn, 0));
         p.why = ru ("Когда пики раздавлены, удары теряют атаку, а громкость перестаёт расти — звук становится плоским и утомительным. Стриминги всё равно убавят громкость, и сжатый трек проиграет.");
-        p.fix = ru ("Убавь драйв в Гравитации на 1–3 дБ или отдай часть работы клипперу. Проверь «Честным сравнением», что стало хуже, а не просто тише.");
+        p.fix = ru ("Убавь драйв в разделе «Громкость» на 1–3 дБ или отдай часть работы клипперу. Сравни с оригиналом через «Обход» с выравниванием громкости.");
         p.severity = juce::jlimit (0.2f, 1.0f, std::max ((g.minPlr - s.plr) / 4.0f, (g.minMicroDyn - micro) / 4.0f) + 0.2f);
         add (p);
     }
@@ -489,7 +489,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
         {
             const float refI = ctx.reference->integrated;
             if (std::abs (refI - target) > 1.0f)
-                reason += fmt (" Эталон звучит на {} LUFS — учитывай, но не гонись за цифрой.", num (refI, 1));
+                reason += fmt (" Референс звучит на {} LUFS — учитывай, но не гонись за цифрой.", num (refI, 1));
         }
         r.recTargetLufs = std::round (target * 2.0f) / 2.0f;
         r.targetReason = reason;
@@ -501,7 +501,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
             p.title = ru ("Тише ориентира");
             p.what = fmt ("Интегральная громкость {} LUFS, ориентир для стиля — около {} LUFS.", num (s.integrated, 1), num (r.recTargetLufs, 1));
             p.why = ru ("Это не ошибка, а выбор. Но рядом с другими треками плейлиста твой может звучать слабее (если платформа не нормализует).");
-            p.fix = ru ("Открой Гравитацию, нажми «Рассчитать» — я посчитаю нужный драйв по прослушанному материалу и покажу, сколько это будет стоить по пикам.");
+            p.fix = ru ("Открой раздел «Громкость», нажми «Рассчитать» — я посчитаю нужный драйв по прослушанному материалу и покажу, сколько это будет стоить по пикам.");
             p.severity = juce::jlimit (0.1f, 0.45f, (r.recTargetLufs - s.integrated - 3.0f) / 8.0f + 0.1f);
             add (p);
         }
@@ -542,7 +542,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
             p.title = ru ("Бас не в моно");
             p.what = fmt ("Ширина ниже {} — {}%, корреляция {}.", hz (s.xovers[0]), juce::roundToInt (lowW), num (lowC, 2));
             p.why = ru ("Широкий низ теряет энергию в моно (клубы, колонки, телефоны), «плавает» в наушниках и мешает лимитеру.");
-            p.fix = ru ("Сузь нижнюю полосу в Приливах до 0–20%. Я подготовил значение.");
+            p.fix = ru ("Сузь нижнюю полосу в разделе «Стерео» до 0–20%. Значение уже подготовлено.");
             p.severity = juce::jlimit (0.3f, 1.0f, (lowW - 20.0f) / 60.0f + (0.8f - lowC) * 0.8f);
             add (p);
             recMeasuredTarget[0] = 8.0f;
@@ -575,7 +575,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
             p.title = ru ("Узкий верх");
             p.what = fmt ("Ширина выше {} — {}%.", hz (s.xovers[2]), juce::roundToInt (s.bandWidthPct[3]));
             p.why = ru ("Широкий верх даёт ощущение простора, не трогая моно-совместимость низа.");
-            p.fix = ru ("Расширь верхнюю полосу в Приливах на 20–30% и проверь в моно.");
+            p.fix = ru ("Расширь верхнюю полосу в разделе «Стерео» на 20–30% и проверь в моно.");
             p.severity = 0.25f;
             add (p);
         }
@@ -587,7 +587,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
             p.title = ru ("Слишком широко");
             p.what = fmt ("Ширина {}%, корреляция в верхних полосах {} / {}.", juce::roundToInt (s.widthPct), num (s.bandCorr[2], 2), num (s.bandCorr[3], 2));
             p.why = ru ("Сверхширокое стерео разваливается в моно и звучит «вне головы» — середина проседает.");
-            p.fix = ru ("Сузь верхние полосы в Приливах до рекомендованных значений.");
+            p.fix = ru ("Сузь верхние полосы в разделе «Стерео» до рекомендованных значений.");
             p.severity = juce::jlimit (0.3f, 0.9f, (s.widthPct - 140.0f) / 80.0f + 0.3f);
             add (p);
         }
@@ -600,7 +600,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
             p.what = fmt ("Средняя корреляция {}, отрицательная корреляция в {}% времени, минимум {}.", num (s.correlation, 2),
                           juce::roundToInt (s.negativeCorrFraction * 100.0f), num (s.worstCorrelation, 2));
             p.why = ru ("Противофаза между каналами — части микса исчезают при сложении в моно: на телефоне, в клубе, в Bluetooth-колонке.");
-            p.fix = ru ("Включи «Моно» в верхней панели и послушай, что пропадает. Чаще всего виноваты стерео-расширители, хорусы и инвертированная фаза на дабл-треке.");
+            p.fix = ru ("Нажми «Моно-проверка» в разделе «Стерео» и послушай, что пропадает. Чаще всего виноваты стерео-расширители, хорусы и инвертированная фаза на дабл-треке.");
             p.severity = juce::jlimit (0.4f, 1.0f, (0.15f - s.correlation) * 2.0f + s.negativeCorrFraction * 2.0f + 0.4f);
             add (p);
         }
@@ -623,7 +623,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
             p.title = s.balanceDb > 0 ? ru ("Правый канал громче левого") : ru ("Левый канал громче правого");
             p.what = fmt ("Разница каналов {} дБ.", num (std::abs (s.balanceDb), 1));
             p.why = ru ("Микс смещается в сторону — особенно заметно в наушниках.");
-            p.fix = ru ("Проверь панораму главных элементов. Для быстрого исправления — баланс в Приливах (я подготовил значение).");
+            p.fix = ru ("Проверь панораму главных элементов. Для быстрого исправления — баланс в разделе «Стерео» (значение подготовлено).");
             p.severity = juce::jlimit (0.2f, 0.8f, (std::abs (s.balanceDb) - 0.8f) / 2.0f + 0.2f);
             add (p);
             r.recBalanceDb = juce::jlimit (-3.0f, 3.0f, ctx.currentBalanceParam - s.balanceDb);
@@ -646,7 +646,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
         p.title = ru ("Размытое пространство в низкой середине");
         p.what = fmt ("В полосе {}–{} много стерео-информации (ширина {}%).", hz (s.xovers[0]), hz (s.xovers[1]), juce::roundToInt (s.bandWidthPct[1]));
         p.why = ru ("Обычно это длинные ревербераторы и широкие пэды — они размывают середину и забирают место у вокала. Это оценка, не измерение реверберации.");
-        p.fix = ru ("Попробуй срез Side-канала около 300 Гц (−2 дБ, режим «Side» в Кратере частот) или укороти/отфильтруй ревер в миксе.");
+        p.fix = ru ("Попробуй срез Side-канала около 300 Гц (−2 дБ, канал «Side» в эквалайзере) или укороти/отфильтруй ревер в миксе.");
         p.freqLo = 200; p.freqHi = 600;
         p.severity = 0.3f;
         add (p);
@@ -688,7 +688,7 @@ Report diagnose (const MixStats& s, const DiagnosticsContext& ctx)
         p.title = ru ("Слишком чисто для такого стиля");
         p.what = fmt ("Большая микродинамика ({} дБ) и спокойная верхняя середина.", num (micro));
         p.why = ru ("Агрессивным стилям обычно помогает немного гармоник — звук становится плотнее и громче на слух без лишнего лимитирования.");
-        p.fix = ru ("Попробуй клиппер в Гравитации на 20–35%: он срезает пики мягко и с передискретизацией.");
+        p.fix = ru ("Попробуй клиппер в разделе «Громкость» на 20–35%: он срезает пики мягко и с передискретизацией.");
         p.severity = 0.2f;
         add (p);
     }

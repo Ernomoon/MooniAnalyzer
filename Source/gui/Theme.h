@@ -23,8 +23,8 @@ namespace col
     const juce::Colour earth    { 0xff52aaff };   // the DAW planet
     const juce::Colour pink     { 0xffff8fbd };
     const juce::Colour text     { 0xffefe9ff };
-    const juce::Colour textDim  { 0xffa99fd3 };
-    const juce::Colour textFaint{ 0xff6f66a0 };
+    const juce::Colour textDim  { 0xffc0b8e6 };
+    const juce::Colour textFaint{ 0xff9088c2 };
 
     juce::Colour forScore (int score);
     juce::Colour forSeverity (float severity);

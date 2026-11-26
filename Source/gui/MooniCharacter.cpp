@@ -7,7 +7,6 @@ static constexpr float PI = juce::MathConstants<float>::pi;
 
 static float clamp01 (float x) { return juce::jlimit (0.0f, 1.0f, x); }
 static float smooth (float x) { x = clamp01 (x); return x * x * (3 - 2 * x); }
-static float easeOutBack (float x) { const float c1 = 1.70158f, c3 = c1 + 1; x = clamp01 (x); return 1 + c3 * std::pow (x - 1, 3.0f) + c1 * std::pow (x - 1, 2.0f); }
 static float elastic (float x) { x = clamp01 (x); if (x <= 0 || x >= 1) return x; return std::pow (2.0f, -10 * x) * std::sin ((x * 10 - 0.75f) * (2 * PI / 3)) + 1; }
 static float bump (float t, float a, float b) { return smooth ((t - a) / 0.12f) * (1.0f - smooth ((t - b) / 0.2f)); }
 

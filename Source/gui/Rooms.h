@@ -137,7 +137,7 @@ public:
     void resized() override;
 private:
     void runPlan();
-    VMeter inMeter { ru ("Вход S"), -36, 0 }, outMeter { ru ("Выход S"), -36, 0 }, tpMeter { "TP", -24, 1 }, grMeter { ru ("Сжатие"), 0, 12 };
+    VMeter inMeter { ru ("Вход"), -36, 0 }, outMeter { ru ("Выход"), -36, 0 }, tpMeter { ru ("Пик"), -24, 1 }, grMeter { ru ("Сжатие"), 0, 12 };
     LoudnessTimeline timeline;
     juce::Slider target, drive, ceiling, release, clip;
     juce::Label targetLabel, driveLabel, ceilLabel, relLabel, clipLabel;

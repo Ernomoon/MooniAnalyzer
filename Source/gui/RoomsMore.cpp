@@ -63,7 +63,7 @@ GravityRoom::GravityRoom (UiContext& c) : Room (c)
     for (auto* l : { &driveLabel, &ceilLabel, &relLabel, &clipLabel }) addAndMakeVisible (*l);
     target.updateText();
 
-    onBtn.setButtonText (ru ("Пресс включён"));
+    onBtn.setButtonText (ru ("Максимайзер включён"));
     aOn = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (ap, maxOn, onBtn);
     addAndMakeVisible (onBtn);
 
@@ -94,19 +94,19 @@ GravityRoom::GravityRoom (UiContext& c) : Room (c)
         addAndMakeVisible (b);
     }
 
-    planBtn.setButtonText (ru ("Рассчитать"));
-    planBtn.setTooltip (ru ("Я прогоню прослушанный материал через пресс офлайн и найду драйв для цели. Ничего не меняется, пока не нажмёшь «Применить»."));
+    planBtn.setButtonText (ru ("1 · Рассчитать"));
+    planBtn.setTooltip (ru ("Я прогоню прослушанный материал через максимайзер офлайн и найду драйв для цели. Ничего не меняется, пока не нажмёшь «Применить»."));
     planBtn.onClick = [this] { runPlan(); };
     setButtonStyle (planBtn, ButtonStyle::Primary);
-    applyPlanBtn.setButtonText (ru ("Применить расчёт"));
+    applyPlanBtn.setButtonText (ru ("2 · Применить"));
     applyPlanBtn.onClick = [this]
     {
         if (! plan.valid) return;
         ctx.proc.applyMaximizerDrive (plan.driveDb, plan.targetLufs);
         if (ctx.action) ctx.action ("applyMax", {});
     };
-    fitBtn.setButtonText (ru ("Подогнать по факту"));
-    fitBtn.setTooltip (ru ("После прослушивания с включённым прессом: скорректировать драйв по реально измеренной громкости на выходе."));
+    fitBtn.setButtonText (ru ("3 · Подогнать"));
+    fitBtn.setTooltip (ru ("После прослушивания с включённым максимайзером: скорректировать драйв по реально измеренной громкости на выходе."));
     fitBtn.onClick = [this]
     {
         const float measured = ctx.live.integrated;
@@ -186,7 +186,7 @@ void GravityRoom::refresh (float dt)
     auto& pl = ctx.proc.engine.getPlanner();
     const bool busy = pl.isBusy();
     planBtn.setEnabled (! busy && L.planCaptured >= 6.0);
-    planBtn.setButtonText (busy ? ru ("Считаю…") : ru ("Рассчитать"));
+    planBtn.setButtonText (busy ? ru ("Считаю…") : ru ("1 · Рассчитать"));
     if (pl.resultCounter() != seenPlan)
     {
         seenPlan = pl.resultCounter();
@@ -216,16 +216,16 @@ void GravityRoom::paint (juce::Graphics& g)
         g.setColour (c); g.setFont (display (20.0f)); g.drawText (formatLufs (v), 160, y - 4, 100, 24, juce::Justification::centredRight);
         g.setColour (col::textFaint); g.setFont (semi (10.5f)); g.drawText ("LUFS", 262, y, 40, 16, juce::Justification::centredLeft);
     };
-    big (64, ru ("Мгновенная (M)"), L.momentary, col::text);
-    big (94, ru ("Кратковременная (S)"), L.shortTerm, col::text);
-    big (124, ru ("Интегральная (I)"), L.integrated, col::mint);
-    big (154, ru ("Вход (I)"), L.integratedIn, col::lilacDim);
+    big (64, ru ("Сейчас (M)"), L.momentary, col::text);
+    big (94, ru ("За 3 секунды (S)"), L.shortTerm, col::text);
+    big (124, ru ("Весь трек (I)"), L.integrated, col::mint);
+    big (154, ru ("До обработки (I)"), L.integratedIn, col::lilacDim);
     g.setColour (col::textDim); g.setFont (semi (11.5f));
     const bool measuredWithPress = ctx.proc.value (maxOn) > 0.5f && L.integrated > -60 && L.activeSeconds > 3;
     g.drawFittedText (measuredWithPress ? fmt ("Достигнуто: {} LUFS (измерено за {} с), цель {}", num (L.integrated, 1), juce::roundToInt (L.activeSeconds), num (ctx.proc.value (maxTarget), 1))
-                                        : ru ("«Достигнуто» появится после прослушивания с прессом."), 30, 180, 276, 32, juce::Justification::centredLeft, 2);
+                                        : ru ("«Достигнуто» появится после прослушивания с включённым максимайзером."), 30, 180, 276, 32, juce::Justification::centredLeft, 2);
 
-    card (g, { 326, 16, 480, 616 }, ru ("Гравитационный пресс"), ru ("лимитер True Peak + мягкий клиппер, цель — в LUFS"));
+    card (g, { 326, 16, 480, 616 }, ru ("Максимайзер"), ru ("лимитер True Peak + мягкий клиппер, цель — в LUFS"));
     g.setColour (col::textDim); g.setFont (semi (12.0f));
     g.drawText (ru ("Цель громкости"), 346, 70, 200, 18, juce::Justification::centredLeft);
 
@@ -243,7 +243,7 @@ void GravityRoom::paint (juce::Graphics& g)
             g.setColour (col::amber.withAlpha (0.2f + 0.1f * (float) i));
             g.fillEllipse (juce::Rectangle<float> (6, 6).withCentre ({ 380 + std::cos (a) * 14, 480 + std::sin (a) * 14 }));
         }
-        g.setColour (col::text); g.drawText (ru ("Прогоняю прослушанный материал через пресс…"), 410, 470, 380, 20, juce::Justification::centredLeft);
+        g.setColour (col::text); g.drawText (ru ("Прогоняю прослушанный материал через максимайзер…"), 410, 470, 380, 20, juce::Justification::centredLeft);
     }
     else if (plan.timeMs > 0)
     {
@@ -271,17 +271,17 @@ void GravityRoom::paint (juce::Graphics& g)
     else
     {
         g.setColour (col::textDim);
-        g.drawFittedText (ru ("1. Дай мне послушать трек (с выключенным прессом или как есть).\n2. Выбери цель и нажми «Рассчитать» — я посчитаю драйв по реальному материалу и покажу цену в сжатии.\n3. «Применить расчёт», затем послушай снова и, если надо, «Подогнать по факту»."),
+        g.drawFittedText (ru ("1. Дай мне послушать трек (максимайзер можно не включать).\n2. Выбери цель и нажми «Рассчитать» — я посчитаю драйв по реальному материалу и покажу цену в сжатии.\n3. «Применить», затем послушай снова и, если громкость не попала в цель, «Подогнать»."),
                           res.reduced (14, 12), juce::Justification::topLeft, 7);
         g.setColour (col::textFaint);
         g.drawText (fmt ("для расчёта собрано: {} с", juce::roundToInt (L.planCaptured)), res.reduced (14, 10), juce::Justification::bottomLeft);
     }
 
-    card (g, { 816, 16, 368, 300 }, ru ("Путь громкости"), ru ("кратковременная: выход и вход, 60 с"));
+    card (g, { 816, 16, 368, 300 }, ru ("Громкость за 60 секунд"), ru ("зелёная — после обработки, сиреневая — до"));
     // the press scene
     auto scene = juce::Rectangle<int> (816, 326, 368, 306);
     drawGlassCard (g, scene.toFloat());
-    drawCardTitle (g, scene.toFloat(), ru ("Пресс"), fmt ("сжатие сейчас: {} дБ", num (grSmooth < 0.05f ? 0.0f : grSmooth, 1)));
+    drawCardTitle (g, scene.toFloat(), ru ("Сжатие лимитера"), fmt ("сжатие сейчас: {} дБ", num (grSmooth < 0.05f ? 0.0f : grSmooth, 1)));
     const float press = juce::jlimit (0.0f, 1.0f, grSmooth / 10.0f);
     const float plateY = 380.0f + press * 90.0f;
     g.setColour (juce::Colour (0xff4a3d8f)); g.fillRect (990.0f, 360.0f, 20.0f, plateY - 360.0f);
@@ -293,11 +293,11 @@ void GravityRoom::paint (juce::Graphics& g)
 // ===========================================================================
 ReferenceRoom::ReferenceRoom (UiContext& c) : Room (c)
 {
-    loadBtn.setButtonText (ru ("Загрузить эталон…"));
+    loadBtn.setButtonText (ru ("Загрузить референс…"));
     setButtonStyle (loadBtn, ButtonStyle::Primary);
     loadBtn.onClick = [this]
     {
-        chooser = std::make_unique<juce::FileChooser> (ru ("Выбери эталонный трек"), juce::File(), "*.wav;*.aif;*.aiff;*.flac;*.ogg;*.mp3");
+        chooser = std::make_unique<juce::FileChooser> (ru ("Выбери референс-трек"), juce::File(), "*.wav;*.aif;*.aiff;*.flac;*.ogg;*.mp3");
         chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this] (const juce::FileChooser& fc)
         {
             const auto f = fc.getResult();
@@ -308,13 +308,13 @@ ReferenceRoom::ReferenceRoom (UiContext& c) : Room (c)
     clearBtn.onClick = [this] { ctx.proc.referenceListen = false; ctx.proc.reference.clear(); ctx.proc.engine.rediagnose(); };
     restartBtn.setButtonText (ru ("С начала"));
     restartBtn.onClick = [this] { ctx.proc.reference.restartPlayback(); };
-    listenBtn.setButtonText (ru ("Слушать эталон"));
-    listenBtn.setTooltip (ru ("Подменить выход плагина эталоном (во время воспроизведения). Анализ твоего микса при этом не сбивается."));
+    listenBtn.setButtonText (ru ("Слушать референс"));
+    listenBtn.setTooltip (ru ("Подменить выход плагина референсом (во время воспроизведения). Анализ твоего микса при этом не сбивается."));
     listenBtn.onClick = [this] { ctx.proc.referenceListen = listenBtn.getToggleState(); };
     matchBtn.setButtonText (ru ("Выровнять громкость"));
     matchBtn.onClick = [this] { auto s = ctx.proc.settings; s.matchReferenceLoudness = matchBtn.getToggleState(); ctx.proc.setSettings (s); };
     useBtn.setButtonText (ru ("Учитывать в анализе"));
-    useBtn.setTooltip (ru ("Использовать баланс эталона как ориентир для рекомендаций (вместо типичного баланса стиля)."));
+    useBtn.setTooltip (ru ("Использовать баланс референса как ориентир для рекомендаций (вместо типичного баланса стиля)."));
     useBtn.onClick = [this] { auto s = ctx.proc.settings; s.useReferenceAsTarget = useBtn.getToggleState(); ctx.proc.setSettings (s); ctx.proc.engine.rediagnose(); };
     for (juce::Component* b : { (juce::Component*) &loadBtn, (juce::Component*) &clearBtn, (juce::Component*) &restartBtn, (juce::Component*) &listenBtn, (juce::Component*) &matchBtn, (juce::Component*) &useBtn })
         addAndMakeVisible (b);
@@ -355,13 +355,13 @@ void ReferenceRoom::refresh (float)
 
 void ReferenceRoom::paint (juce::Graphics& g)
 {
-    card (g, { 16, 16, 1168, 104 }, ru ("Эталонный телескоп"));
+    card (g, { 16, 16, 1168, 104 }, ru ("Референс-трек"), ru ("необязательно"));
     const auto st = ctx.proc.reference.getStatus();
     auto info = juce::Rectangle<int> (970, 30, 200, 70);
     g.setFont (semi (12.5f));
     if (st == ReferenceTrack::Status::Loading)
     {
-        g.setColour (col::amber); g.drawText (ru ("Навожу телескоп…"), 420, 60, 130, 20, juce::Justification::centredLeft);
+        g.setColour (col::amber); g.drawText (ru ("Загружаю и анализирую…"), 420, 60, 130, 20, juce::Justification::centredLeft);
         auto bar = juce::Rectangle<float> (420, 84, 120, 5);
         g.setColour (col::night0); g.fillRoundedRectangle (bar, 2.5f);
         g.setColour (col::amber); g.fillRoundedRectangle (bar.withWidth (bar.getWidth() * ctx.proc.reference.getProgress()), 2.5f);
@@ -374,7 +374,7 @@ void ReferenceRoom::paint (juce::Graphics& g)
     }
 
     auto spec = juce::Rectangle<int> (16, 130, 740, 502);
-    card (g, spec, ru ("Баланс: твой микс и эталон"), ru ("оба выровнены по громкости (среднее 500 Гц – 2 кГц = 0 дБ)"));
+    card (g, spec, ru ("Баланс: твой микс и референс"), ru ("оба выровнены по громкости (среднее 500 Гц – 2 кГц = 0 дБ)"));
     auto table = juce::Rectangle<int> (766, 130, 418, 502);
     card (g, table, ru ("Сравнение"));
 
@@ -383,7 +383,7 @@ void ReferenceRoom::paint (juce::Graphics& g)
     if (st != ReferenceTrack::Status::Ready || rs == nullptr)
     {
         g.setColour (col::textDim); g.setFont (body (14.0f));
-        g.drawFittedText (ru ("Эталон — необязательный ориентир: готовый трек того же стиля, который тебе нравится по звуку.\n\n"
+        g.drawFittedText (ru ("Референс — необязательный ориентир: готовый трек того же стиля, который тебе нравится по звуку.\n\n"
                               "Я проанализирую его так же, как твой микс, выровняю громкость и покажу разницу в балансе, ширине и динамике. "
                               "Это контекст для решений, а не цель, которую нужно скопировать."),
                           spec.reduced (40, 80), juce::Justification::centredTop, 8);
@@ -431,7 +431,7 @@ void ReferenceRoom::paint (juce::Graphics& g)
     if (hasMix) { g.setColour (col::cream); g.strokePath (pm, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved)); }
     g.setFont (semi (11.5f));
     g.setColour (col::cream); g.drawText (ru ("— твой микс"), (int) plot.getX(), (int) plot.getY() - 20, 120, 16, juce::Justification::centredLeft);
-    g.setColour (col::pink); g.drawText (ru ("— эталон"), (int) plot.getX() + 120, (int) plot.getY() - 20, 100, 16, juce::Justification::centredLeft);
+    g.setColour (col::pink); g.drawText (ru ("— референс"), (int) plot.getX() + 120, (int) plot.getY() - 20, 100, 16, juce::Justification::centredLeft);
     g.setColour (col::textFaint); g.drawText (ru ("красное — у тебя больше, синее — меньше"), (int) plot.getRight() - 260, (int) plot.getY() - 20, 260, 16, juce::Justification::centredRight);
 
     // comparison table + interpretation
@@ -439,7 +439,7 @@ void ReferenceRoom::paint (juce::Graphics& g)
     auto header = r.removeFromTop (20);
     g.setColour (col::textFaint); g.setFont (semi (11.0f));
     g.drawText (ru ("микс"), header.withTrimmedLeft (170).withWidth (70), juce::Justification::centredRight);
-    g.drawText (ru ("эталон"), header.withTrimmedLeft (240).withWidth (70), juce::Justification::centredRight);
+    g.drawText (ru ("референс"), header.withTrimmedLeft (240).withWidth (70), juce::Justification::centredRight);
     g.drawText (ru ("разница"), header.withTrimmedLeft (310).withWidth (72), juce::Justification::centredRight);
     auto lowShare = [] (const MixStats& s) { return s.lowEndShare * 100.0f; };
     struct Row { juce::String name; float a, b; int dec; juce::String unit; };
@@ -468,7 +468,7 @@ void ReferenceRoom::paint (juce::Graphics& g)
     {
         juce::StringArray notes;
         const float dI = m.integrated - rs->integrated;
-        if (std::abs (dI) > 1.0f) notes.add (fmt ("Эталон {} на {} LU — графики уже выровнены, так что сравнивай баланс, а не громкость.", dI < 0 ? ru ("громче") : ru ("тише"), num (std::abs (dI), 1)));
+        if (std::abs (dI) > 1.0f) notes.add (fmt ("Референс {} на {} LU — графики уже выровнены, так что сравнивай баланс, а не громкость.", dI < 0 ? ru ("громче") : ru ("тише"), num (std::abs (dI), 1)));
         auto bandDiff = [&] (float lo, float hi)
         {
             float s = 0; int n = 0;
@@ -479,8 +479,8 @@ void ReferenceRoom::paint (juce::Graphics& g)
         if (std::abs (low) > 2) notes.add (fmt ("Низа у тебя {} на {} дБ (40–120 Гц).", low > 0 ? ru ("больше") : ru ("меньше"), num (std::abs (low), 1)));
         if (std::abs (mid) > 2) notes.add (fmt ("Низкой середины {} на {} дБ.", mid > 0 ? ru ("больше") : ru ("меньше"), num (std::abs (mid), 1)));
         if (std::abs (hi) > 2) notes.add (fmt ("Верха (3–10 кГц) {} на {} дБ.", hi > 0 ? ru ("больше") : ru ("меньше"), num (std::abs (hi), 1)));
-        if (m.microDynamicsDb < rs->microDynamicsDb - 2) notes.add (ru ("Твой мастер плотнее эталона — проверь, не потерялась ли атака."));
-        if (notes.isEmpty()) notes.add (ru ("По основным параметрам ты близок к эталону. Красота."));
+        if (m.microDynamicsDb < rs->microDynamicsDb - 2) notes.add (ru ("Твой мастер плотнее референса — проверь, не потерялась ли атака."));
+        if (notes.isEmpty()) notes.add (ru ("По основным параметрам ты близок к референсу."));
         g.setColour (col::text); g.setFont (body (12.5f));
         g.drawFittedText (notes.joinIntoString ("\n"), r, juce::Justification::topLeft, 8);
     }
@@ -582,14 +582,14 @@ void LogbookRoom::refresh (float)
 
 void LogbookRoom::paint (juce::Graphics& g)
 {
-    card (g, { 16, 16, 440, 616 }, ru ("Бортовой журнал"), plural ((int) entries.size(), "запись", "записи", "записей") + ru (", новые сверху · ★ — оригинал"));
+    card (g, { 16, 16, 440, 616 }, ru ("История анализов"), plural ((int) entries.size(), "запись", "записи", "записей") + ru (", новые сверху · ★ — оригинал"));
     auto d = juce::Rectangle<int> (466, 16, 718, 616);
     card (g, d, ru ("Сравнение"), ru ("оригинал · выбранный шаг · последний анализ"));
     const int row = list.getSelectedRow();
     if (row < 0 || row >= (int) entries.size())
     {
         g.setColour (col::textDim); g.setFont (body (14.0f));
-        g.drawFittedText (ru ("Журнал пока пуст. Каждое прослушивание попадает сюда вместе с настройками — к любому шагу можно вернуться."), d.reduced (40, 120), juce::Justification::centredTop, 4);
+        g.drawFittedText (ru ("История пока пуста. Каждое прослушивание попадает сюда вместе с настройками — к любому шагу можно вернуться."), d.reduced (40, 120), juce::Justification::centredTop, 4);
         return;
     }
     const auto& sel = entries[(size_t) entries.size() - 1 - (size_t) row];
@@ -654,8 +654,8 @@ SettingsPanel::SettingsPanel (UiContext& c) : ctx (c)
     chatter.onChange = [this] { push(); };
     autoListen.setButtonText (ru ("Начинать слушать автоматически при Play"));
     reduced.setButtonText (ru ("Меньше анимации (экономия CPU, спокойнее)"));
-    fair.setButtonText (ru ("Честное сравнение: выравнивать громкость при Затмении"));
-    useRef.setButtonText (ru ("Учитывать эталон в рекомендациях"));
+    fair.setButtonText (ru ("Выравнивать громкость оригинала при обходе"));
+    useRef.setButtonText (ru ("Учитывать референс в рекомендациях"));
     for (auto* b : { &autoListen, &reduced, &fair }) { b->onClick = [this] { push(); }; addAndMakeVisible (*b); }
     useRef.onClick = [this] { push(); ctx.proc.engine.rediagnose(); };
     addAndMakeVisible (useRef);
@@ -710,11 +710,11 @@ void SettingsPanel::paint (juce::Graphics& g)
 {
     drawGlassCard (g, getLocalBounds().toFloat(), 22, 0.98f);
     g.setColour (col::text); g.setFont (display (18.0f));
-    g.drawText (ru ("Настройки станции"), 30, 22, getWidth() - 60, 26, juce::Justification::centredLeft);
+    g.drawText (ru ("Настройки"), 30, 22, getWidth() - 60, 26, juce::Justification::centredLeft);
     g.setColour (col::textDim); g.setFont (semi (13.0f));
     g.drawText (ru ("Режим анализа"), 30, 80, 180, 30, juce::Justification::centredLeft);
     g.drawText (ru ("Профиль стиля"), 30, 118, 180, 30, juce::Justification::centredLeft);
-    g.drawText (ru ("Характер Mooni"), 30, 156, 180, 30, juce::Justification::centredLeft);
+    g.drawText (ru ("Болтливость Mooni"), 30, 156, 180, 30, juce::Justification::centredLeft);
     g.setColour (col::textFaint); g.setFont (body (12.0f));
     g.drawFittedText (ru ("Профиль задаёт контекст: ожидаемый баланс, плотность и громкость стиля. «Авто» угадывает стиль по звуку и честно помечает это как предположение. "
                           "Твои ориентиры: жёсткие треки ≈ −5 LUFS, трэп ≈ −7 LUFS — они учтены в профилях, но рекомендации всегда опираются на реальный материал."),
